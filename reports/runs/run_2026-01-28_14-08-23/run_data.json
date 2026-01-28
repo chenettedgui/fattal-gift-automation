@@ -1,0 +1,10 @@
+[
+  {
+    "name": "test_check_balance_button_enabled_after_code",
+    "status": "PASSED",
+    "timestamp": "2026-01-28 14:08:33",
+    "duration": "10.12s",
+    "final_screenshot": "tests_test_check_balance.py__test_check_balance_button_enabled_after_code_PASSED_20260128_140833.png",
+    "steps": []
+  }
+]

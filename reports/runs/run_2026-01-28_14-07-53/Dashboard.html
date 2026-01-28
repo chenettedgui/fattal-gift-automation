@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Fattal QA Automation Dashboard - Fattal- Gift</title>
+  <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      margin: 20px;
+      color: #333;
+    }
+    .dashboard-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 24px;
+    }
+    .dashboard-header h1 {
+      margin: 0;
+      font-size: 1.8em;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+    .dashboard-header h1::before {
+      content: '🧪';
+      margin-right: 10px;
+    }
+    .header-logo {
+      height: 60px;
+      max-width: 240px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #fff;
+      padding: 6px 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    @media (max-width: 700px) {
+      .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .header-logo {
+        margin-left: 0;
+        margin-top: 6px;
+        height: 44px;
+        max-width: 180px;
+      }
+    }
+
+    select {
+      font-size: 14px;
+      padding: 5px;
+      margin-left: 10px;
+    }
+
+    .test-entry {
+      background: #fff;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      transition: background 0.2s ease;
+    }
+    .test-entry:hover {
+      background: #f0f8ff;
+    }
+
+    .meta-line {
+      margin: 6px 0 0 0;
+      font-size: 14px;
+    }
+
+    /* 4-step grid */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(140px, 1fr));
+      gap: 14px;
+      margin-top: 12px;
+      align-items: start;
+    }
+    @media (max-width: 1000px) {
+      .steps-grid {
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+      }
+    }
+    @media (max-width: 520px) {
+      .steps-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .step-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .step-title {
+      font-weight: 700;
+      font-size: 13px;
+      color: #222;
+    }
+    .step-card img {
+      width: 100%;
+      height: auto;
+      max-height: 190px;
+      object-fit: contain;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0; top: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.85);
+    }
+    .modal-content {
+      margin: 5% auto;
+      display: block;
+      max-width: 92vw;
+      max-height: 84vh;
+    }
+    .close {
+      position: absolute;
+      top: 15px;
+      right: 35px;
+      color: #fff;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* Back-to-top button */
+    #backToTop {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+      border: none;
+      background: #111827;
+      color: white;
+      font-size: 22px;
+      cursor: pointer;
+      display: none;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.22);
+    }
+    #backToTop:hover {
+      background: #0b1220;
+    }
+  </style>
+
+  <script>
+    const runData = {"run_2026-01-28_14-07-53": [{"name": "test_check_balance_button_enabled_after_code", "status": "PASSED", "timestamp": "2026-01-28 14:08:03", "duration": "10.39s", "final_screenshot": "tests_test_check_balance.py__test_check_balance_button_enabled_after_code_PASSED_20260128_140803.png", "steps": []}]};
+    const screenshotsPrefix = `Screenshots/{file}`;
+
+    function openModal(src) {
+      const modal = document.getElementById("screenshotModal");
+      const modalImg = document.getElementById("modalImage");
+      modal.style.display = "block";
+      modalImg.src = src;
+    }
+
+    function closeModal() {
+      document.getElementById("screenshotModal").style.display = "none";
+    }
+
+    function imgSrc(runId, file) {
+      return screenshotsPrefix
+        .replace("{runId}", runId)
+        .replace("{file}", file);
+    }
+
+    function populateRun(runId) {
+      const container = document.getElementById("results");
+      container.innerHTML = "";
+
+      const showPassed = document.getElementById("filterPassed").checked;
+      const showFailed = document.getElementById("filterFailed").checked;
+
+      const data = runData[runId] || [];
+      data.forEach(test => {
+        if ((test.status === "PASSED" && !showPassed) || (test.status === "FAILED" && !showFailed)) return;
+
+        const div = document.createElement("div");
+        div.classList.add("test-entry");
+
+        const color = test.status === "PASSED" ? "green" : "red";
+
+        const steps = Array.isArray(test.steps) ? test.steps.slice(0, 4) : [];
+        const hasSteps = steps.length > 0;
+
+        let gridHtml = "";
+
+        if (hasSteps) {
+          const cards = steps.map(s => {
+            const src = imgSrc(runId, s.file);
+            return `
+              <div class="step-card">
+                <div class="step-title">${s.label}</div>
+                <img src="${src}" onclick="openModal(this.src)" />
+              </div>
+            `;
+          }).join("");
+
+          gridHtml = `<div class="steps-grid">${cards}</div>`;
+        } else {
+          if (test.final_screenshot) {
+            const src = imgSrc(runId, test.final_screenshot);
+            gridHtml = `
+              <div class="steps-grid" style="grid-template-columns: minmax(200px, 340px);">
+                <div class="step-card">
+                  <div class="step-title">final_screenshot</div>
+                  <img src="${src}" onclick="openModal(this.src)" />
+                </div>
+              </div>
+            `;
+          }
+        }
+
+        div.innerHTML = `
+          <h3>${test.name} — <span style="color:${color}">${test.status}</span></h3>
+          <p class="meta-line"><strong>Timestamp:</strong> ${test.timestamp} | <strong>Duration:</strong> ${test.duration}</p>
+          ${gridHtml}
+          <hr>
+        `;
+
+        container.appendChild(div);
+      });
+    }
+
+    window.addEventListener("scroll", () => {
+      const btn = document.getElementById("backToTop");
+      btn.style.display = (window.scrollY > 450) ? "block" : "none";
+    });
+
+    function backToTop() {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  </script>
+</head>
+
+<body onload="populateRun(document.getElementById('runSelect').value)">
+  <div class="dashboard-header">
+    <h1>Fattal QA Automation Dashboard - Fattal- Gift</h1>
+    <img src="../../assets/logo.svg" alt="Fattal Logo" class="header-logo" />
+  </div>
+
+  <label>Choose Run:
+    <select id="runSelect" onchange="populateRun(this.value)">
+      <option value="run_2026-01-28_14-07-53" selected>Wednesday 2026-01-28 14:07:53 | 1 tests | ✅ 1 | ❌ 0 | 💻 1</option>
+    </select>
+  </label>
+
+  <div style="margin-top: 10px;">
+    <label><input type="checkbox" id="filterPassed" checked onchange="populateRun(document.getElementById('runSelect').value)"> Show Passed</label>
+    <label><input type="checkbox" id="filterFailed" checked onchange="populateRun(document.getElementById('runSelect').value)"> Show Failed</label>
+  </div>
+
+  <div id="results" style="margin-top: 20px;"></div>
+
+  <button id="backToTop" onclick="backToTop()" title="Back to top">↑</button>
+
+  <div id="screenshotModal" class="modal" onclick="closeModal()">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="modalImage">
+  </div>
+</body>
+</html>
